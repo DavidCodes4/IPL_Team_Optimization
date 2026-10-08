@@ -1,0 +1,20 @@
+player,role,can_bowl,top_order_eligible
+MS Dhoni,Wicketkeeper,0,0
+AM Rahane,Batter,0,1
+RD Gaikwad,Batter,0,1
+Sameer Rizvi,Batter,0,1
+R Ravindra,Batter,1,1
+S Dube,Batter,0,0
+DJ Mitchell,All-rounder,1,1
+MM Ali,All-rounder,1,1
+RA Jadeja,All-rounder,1,0
+MJ Santner,All-rounder,1,0
+SN Thakur,All-rounder,1,0
+DL Chahar,Bowler,1,0
+M Pathirana,Bowler,1,0
+M Theekshana,Bowler,1,0
+Mustafizur Rahman,Bowler,1,0
+Mukesh Choudhary,Bowler,1,0
+RJ Gleeson,Bowler,1,0
+Simarjeet Singh,Bowler,1,0
+TU Deshpande,Bowler,1,0
