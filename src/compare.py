@@ -7,6 +7,17 @@ from src import ip_model as ipm
 from src import gp_model as gpm
 
 
+def ip_style_score(result: dict, R_ik: pd.DataFrame, O_i: pd.Series, lam: float) -> float:
+    """Evaluate any result's XI+batting order against the IP objective (sum R_ik*y_ik +
+    lambda*sum O_i*x_i), so an IP result, a GP result, and a manually-built XI can all be
+    ranked on the same scale regardless of which objective (if any) chose them.
+    """
+    r = R_ik.set_index(["player", "batting_position"])["R_ik"]
+    batting = sum(r.get((p, k), 0.0) for k, p in result["batting_order"].items())
+    bowling = sum(O_i.get(p, 0.0) for p in result["selected_xi"])
+    return batting + lam * bowling
+
+
 def compare_results(ip_result: dict, gp_result: dict) -> dict:
     ip_xi = set(ip_result["selected_xi"])
     gp_xi = set(gp_result["selected_xi"])

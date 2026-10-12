@@ -9,6 +9,14 @@ import pandas as pd
 
 TOP_POSITIONS = (1, 2, 3)
 
+_BATTING_COLS = ["runs", "balls_faced", "dismissals", "average", "strike_rate", "boundary_pct", "dot_pct"]
+_BOWLING_COLS = ["legal_balls", "runs_conceded", "wickets", "economy", "bowling_strike_rate", "dot_pct"]
+
+
+def _is_empty_selection(players: list[str] | None) -> bool:
+    """True only when an explicit, empty player list was passed (None means 'everyone')."""
+    return players is not None and len(players) == 0
+
 
 def compute_batting_positions(deliveries: pd.DataFrame) -> pd.DataFrame:
     """Derive each player's batting position (1..11+) per innings from entry order.
@@ -69,6 +77,8 @@ def _batting_rates(g: pd.DataFrame) -> pd.Series:
 
 
 def batting_overall(deliveries: pd.DataFrame, players: list[str] | None = None) -> pd.DataFrame:
+    if _is_empty_selection(players):
+        return pd.DataFrame(columns=["player"] + _BATTING_COLS)
     d = deliveries if players is None else deliveries[deliveries["batter"].isin(players)]
     out = d.groupby("batter").apply(_batting_rates, include_groups=False)
     out.index.name = "player"
@@ -78,6 +88,8 @@ def batting_overall(deliveries: pd.DataFrame, players: list[str] | None = None) 
 def batting_by_position(
     deliveries: pd.DataFrame, positions: pd.DataFrame, players: list[str] | None = None
 ) -> pd.DataFrame:
+    if _is_empty_selection(players):
+        return pd.DataFrame(columns=["player", "batting_position"] + _BATTING_COLS)
     d = deliveries.merge(
         positions, left_on=["match_id", "inning", "batter"], right_on=["match_id", "inning", "player"], how="inner"
     )
@@ -89,6 +101,8 @@ def batting_by_position(
 
 
 def batting_by_phase(deliveries: pd.DataFrame, players: list[str] | None = None) -> pd.DataFrame:
+    if _is_empty_selection(players):
+        return pd.DataFrame(columns=["player", "phase"] + _BATTING_COLS)
     d = deliveries if players is None else deliveries[deliveries["batter"].isin(players)]
     out = d.groupby(["batter", "phase"]).apply(_batting_rates, include_groups=False)
     out.index.names = ["player", "phase"]
@@ -117,6 +131,8 @@ def _bowling_rates(g: pd.DataFrame) -> pd.Series:
 
 
 def bowling_overall(deliveries: pd.DataFrame, players: list[str] | None = None) -> pd.DataFrame:
+    if _is_empty_selection(players):
+        return pd.DataFrame(columns=["player"] + _BOWLING_COLS)
     d = deliveries if players is None else deliveries[deliveries["bowler"].isin(players)]
     out = d.groupby("bowler").apply(_bowling_rates, include_groups=False)
     out.index.name = "player"
@@ -124,6 +140,8 @@ def bowling_overall(deliveries: pd.DataFrame, players: list[str] | None = None) 
 
 
 def bowling_by_phase(deliveries: pd.DataFrame, players: list[str] | None = None) -> pd.DataFrame:
+    if _is_empty_selection(players):
+        return pd.DataFrame(columns=["player", "phase"] + _BOWLING_COLS)
     d = deliveries if players is None else deliveries[deliveries["bowler"].isin(players)]
     out = d.groupby(["bowler", "phase"]).apply(_bowling_rates, include_groups=False)
     out.index.names = ["player", "phase"]

@@ -69,12 +69,29 @@ def solve_gp(
             prob += pulp.lpSum(y[i, k] for i in TOP) == 1, f"top_order_eligibility_pos_{k}"
 
     # Goal equations: f_g(x,y) + d_g^- - d_g^+ = T_g
-    batting_score = pulp.lpSum(r.get((i, k), 0.0) * y[i, k] for i in players for k in POSITIONS)
-    bowling_score = pulp.lpSum(O_i.get(i, 0.0) * x[i] for i in players)
-    top_order_score = pulp.lpSum(
-        r.get((i, k), 0.0) * y[i, k] for i in players for k in TOP_ORDER_POSITIONS
+    #
+    # Each raw sum (of 0-100 scores over several players/positions) is divided by a fixed
+    # denominator and scaled by 2, turning it into a 0-200 "quality index" that reads like a
+    # plausible IPL score instead of an opaque summed total (e.g. ~170 instead of ~700). The
+    # denominators are constants (not decision-dependent), so the equations stay linear:
+    #   batting / top-order: divided by how many positions contribute (11, or 3 for top-order).
+    #   bowling: divided by 5, approximating the frontline bowlers who'd share 20 overs.
+    #   form: divided by 11, over the full XI.
+    # This is a presentation rescaling of the same underlying model, not a ball-by-ball run
+    # projection.
+    QUALITY_SCALE = 2.0
+    batting_score = (
+        pulp.lpSum(r.get((i, k), 0.0) * y[i, k] for i in players for k in POSITIONS)
+        / len(POSITIONS)
+        * QUALITY_SCALE
     )
-    form_score = pulp.lpSum(F_i.get(i, 0.0) * x[i] for i in players)
+    bowling_score = pulp.lpSum(O_i.get(i, 0.0) * x[i] for i in players) / 5 * QUALITY_SCALE
+    top_order_score = (
+        pulp.lpSum(r.get((i, k), 0.0) * y[i, k] for i in players for k in TOP_ORDER_POSITIONS)
+        / len(TOP_ORDER_POSITIONS)
+        * QUALITY_SCALE
+    )
+    form_score = pulp.lpSum(F_i.get(i, 0.0) * x[i] for i in players) / len(POSITIONS) * QUALITY_SCALE
 
     prob += batting_score + d_minus["B"] - d_plus["B"] == targets["T_B"], "goal_batting"
     prob += bowling_score + d_minus["O"] - d_plus["O"] == targets["T_O"], "goal_bowling"
